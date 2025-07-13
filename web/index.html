@@ -1,0 +1,1436 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SpatialCPP - Interface Web</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.24.1/plotly.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+            gap: 20px;
+            padding: 20px;
+        }
+
+        .sidebar {
+            width: 350px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow-y: auto;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .visualization-container {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .results-container {
+            height: 250px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            overflow: hidden;
+        }
+
+        h1 {
+            color: #4a5568;
+            margin-bottom: 30px;
+            font-size: 28px;
+            font-weight: 700;
+            text-align: center;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        h2 {
+            color: #2d3748;
+            margin-bottom: 20px;
+            font-size: 20px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(247, 250, 252, 0.8);
+            border-radius: 15px;
+            border: 1px solid rgba(226, 232, 240, 0.8);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #4a5568;
+            font-size: 14px;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #48bb78, #38a169);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #f56565, #e53e3e);
+        }
+
+        .command-guide {
+            background: #1a202c;
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 12px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .command-guide h3 {
+            color: #63b3ed;
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+
+        .command-item {
+            margin-bottom: 10px;
+            padding: 8px;
+            background: rgba(45, 55, 72, 0.6);
+            border-radius: 6px;
+            border-left: 3px solid #667eea;
+        }
+
+        .query-input {
+            position: relative;
+        }
+
+        .autocomplete-suggestions {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-top: none;
+            border-radius: 0 0 12px 12px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 1000;
+            display: none;
+        }
+
+        .suggestion-item {
+            padding: 12px 16px;
+            cursor: pointer;
+            border-bottom: 1px solid #f7fafc;
+            transition: background-color 0.2s ease;
+        }
+
+        .suggestion-item:hover, .suggestion-item.selected {
+            background: #f7fafc;
+        }
+
+        .results-table {
+            width: 100%;
+            height: calc(100% - 60px);
+            overflow: auto;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            background: white;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        th {
+            background: #f7fafc;
+            font-weight: 600;
+            color: #4a5568;
+            position: sticky;
+            top: 0;
+        }
+
+        tr:hover {
+            background: #f7fafc;
+        }
+
+        .visualization-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            background: #e2e8f0;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            width: auto;
+            margin: 0;
+        }
+
+        .tab.active {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .tab-content {
+            height: calc(100% - 60px);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .file-upload {
+            border: 2px dashed #cbd5e0;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #f7fafc;
+        }
+
+        .file-upload:hover {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.05);
+        }
+
+        .file-upload.dragover {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.1);
+        }
+
+        .column-selector {
+            display: flex;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .column-selector select {
+            flex: 1;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .status-success { background: #48bb78; }
+        .status-warning { background: #ed8936; }
+        .status-error { background: #f56565; }
+
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: white;
+            border-radius: 12px;
+            padding: 16px 20px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+            border-left: 4px solid;
+            z-index: 2000;
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+            max-width: 400px;
+        }
+
+        .toast.show {
+            transform: translateX(0);
+        }
+
+        .toast.success { border-left-color: #48bb78; }
+        .toast.error { border-left-color: #f56565; }
+        .toast.warning { border-left-color: #ed8936; }
+
+        .connection-status {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+        }
+
+        @media (max-width: 1200px) {
+            .container {
+                flex-direction: column;
+                height: auto;
+            }
+            
+            .sidebar {
+                width: 100%;
+                order: 2;
+            }
+            
+            .main-content {
+                order: 1;
+                height: 70vh;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="sidebar">
+            <h1>🌐 SpatialCPP</h1>
+            
+            <div class="section">
+                <h2>📊 Configuración de Índice</h2>
+                
+                <div class="form-group">
+                    <label for="indexType">Tipo de Índice:</label>
+                    <select id="indexType">
+                        <option value="rtree">R-Tree</option>
+                        <option value="grid">Grid Index</option>
+                    </select>
+                </div>
+                
+                <button id="createIndexBtn" onclick="createIndex()">🔧 Crear Índice</button>
+                <div id="indexStatus" style="margin-top: 10px; font-size: 14px; color: #666;">
+                    <span class="status-indicator status-error"></span>Sin índice
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>📁 Gestión de Datos</h2>
+                
+                                <div class="file-upload" onclick="document.getElementById('csvFile').click()">
+                    <div>📄 Subir archivo CSV</div>
+                    <div style="font-size: 12px; color: #666; margin-top: 5px;">
+                        Arrastra y suelta o haz clic para seleccionar
+                    </div>
+                </div>
+                <input type="file" id="csvFile" accept=".csv" style="display: none;">
+                
+                <div id="columnSelector" class="column-selector" style="display: none;">
+                    <div style="flex: 1;">
+                        <label for="xColumn">Columna X:</label>
+                        <select id="xColumn"></select>
+                    </div>
+                    <div style="flex: 1;">
+                        <label for="yColumn">Columna Y:</label>
+                        <select id="yColumn"></select>
+                    </div>
+                    <div style="flex: 1;">
+                        <label for="zColumn">Columna Z (opcional):</label>
+                        <select id="zColumn">
+                            <option value="">-- Ninguna --</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <button onclick="sendAllCSVToBackend()" id="loadDataBtn" style="display: none;" class="btn-secondary">
+                    📊 Cargar Datos
+                </button>
+                
+                <button onclick="clearData()" class="btn-danger">🗑️ Limpiar Datos</button>
+                
+                <div id="dataStatus" style="margin-top: 10px; font-size: 14px; color: #666;">
+                    <span class="status-indicator status-warning"></span>Sin datos
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="command-guide">
+                    <h3>💡 Guía de Comandos</h3>
+                    <div class="command-item">
+                        <strong>RANGE x1 y1 x2 y2</strong><br>
+                        Consulta por rango rectangular
+                    </div>
+                    <div class="command-item">
+                        <strong>KNN x y k</strong><br>
+                        K vecinos más cercanos
+                    </div>
+                    <div class="command-item">
+                        <strong>INSERT x y [z]</strong><br>
+                        Insertar punto 2D o 3D
+                    </div>
+                    <div class="command-item">
+                        <strong>POLYGON x1,y1 x2,y2 ...</strong><br>
+                        Insertar polígono
+                    </div>
+                    <div class="command-item">
+                        <strong>STATS</strong><br>
+                        Mostrar estadísticas del índice
+                    </div>
+                </div>
+                
+                <div class="form-group query-input">
+                    <label for="queryInput">Consulta:</label>
+                    <input type="text" id="queryInput" placeholder="Ej: RANGE 0 0 10 10">
+                    <div id="suggestions" class="autocomplete-suggestions"></div>
+                </div>
+                
+                <button onclick="executeQuery()" id="executeBtn">⚡ Ejecutar Consulta</button>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="visualization-container">
+                <div class="visualization-tabs">
+                    <button class="tab active" onclick="switchTab('2d')">📊 Vista 2D</button>
+                    <button class="tab" onclick="switchTab('3d')">🎯 Vista 3D</button>
+                </div>
+                
+                <div id="viz2d" class="tab-content">
+                    <div id="plot2d" style="width: 100%; height: 100%;"></div>
+                </div>
+                
+                <div id="viz3d" class="tab-content" style="display: none;">
+                    <div id="plot3d" style="width: 100%; height: 100%;"></div>
+                </div>
+            </div>
+
+            <div class="results-container">
+                <h2>📋 Resultados <span id="resultCount" style="font-size: 14px; color: #666;"></span></h2>
+                <div class="results-table">
+                    <table id="resultsTable">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>X</th>
+                                <th>Y</th>
+                                <th>Z</th>
+                                <th>Tipo</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+                <button onclick="downloadResults()" style="margin-top: 15px; width: auto; float: right;">
+                    💾 Descargar Resultados
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="connection-status" id="connectionStatus">
+        <span class="status-indicator status-error" id="connectionIndicator"></span>
+        <span id="connectionText">Desconectado</span>
+    </div>
+
+    <script>
+        // Estado global
+        let indexCreated = false;
+        let currentData = [];
+        let lastResults = [];
+        let csvData = null;
+        let currentTab = '2d';
+        let scene3D, camera3D, renderer3D;
+
+        // Comandos para autocompletado
+        const commands = [
+            'RANGE ', 'KNN ', 'INSERT ', 'POLYGON ', 'STATS'
+        ];
+
+        // API Base URL
+        const API_BASE = 'http://localhost:5001/api';
+
+        // Inicialización
+        document.addEventListener('DOMContentLoaded', function() {
+            checkServerConnection();
+            initializeInterface();
+            setupEventListeners();
+            setupFileUpload();
+            initializeVisualizations();
+        });
+
+        // Verificar conexión con el servidor
+        async function checkServerConnection() {
+            try {
+                const response = await fetch('http://localhost:5001/');
+                if (response.ok) {
+                    updateConnectionStatus(true);
+                    showToast('Conectado al servidor', 'success');
+                } else {
+                    updateConnectionStatus(false);
+                    showToast('Error conectando al servidor', 'error');
+                }
+            } catch (error) {
+                updateConnectionStatus(false);
+                showToast('Servidor no disponible. Asegúrate de ejecutar server.py', 'error');
+            }
+        }
+
+        function updateConnectionStatus(connected) {
+            const indicator = document.getElementById('connectionIndicator');
+            const text = document.getElementById('connectionText');
+            
+            if (connected) {
+                indicator.classList.remove('status-error');
+                indicator.classList.add('status-success');
+                text.textContent = 'Conectado';
+            } else {
+                indicator.classList.remove('status-success');
+                indicator.classList.add('status-error');
+                text.textContent = 'Desconectado';
+            }
+        }
+
+        function initializeInterface() {
+            updateIndexStatus();
+            updateDataStatus();
+        }
+
+        function setupEventListeners() {
+            const queryInput = document.getElementById('queryInput');
+            queryInput.addEventListener('input', handleQueryInput);
+            queryInput.addEventListener('keydown', handleQueryKeydown);
+            
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('.query-input')) {
+                    document.getElementById('suggestions').style.display = 'none';
+                }
+            });
+        }
+
+        function setupFileUpload() {
+            const fileUpload = document.querySelector('.file-upload');
+            const fileInput = document.getElementById('csvFile');
+
+            fileUpload.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                this.classList.add('dragover');
+            });
+
+            fileUpload.addEventListener('dragleave', function(e) {
+                e.preventDefault();
+                this.classList.remove('dragover');
+            });
+
+            fileUpload.addEventListener('drop', function(e) {
+                e.preventDefault();
+                this.classList.remove('dragover');
+                
+                const files = e.dataTransfer.files;
+                if (files.length > 0 && files[0].name.endsWith('.csv')) {
+                    fileInput.files = files;
+                    handleFileSelect();
+                }
+            });
+
+            fileInput.addEventListener('change', handleFileSelect);
+        }
+
+        // Crear índice
+        async function createIndex() {
+            try {
+                const indexType = document.getElementById('indexType').value;
+                
+                const response = await fetch(`${API_BASE}/create_index`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ type: indexType })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    indexCreated = true;
+                    updateIndexStatus();
+                    showToast(result.message || 'Índice creado exitosamente', 'success');
+                    
+                    // Limpiar datos al crear nuevo índice
+                    currentData = [];
+                    lastResults = [];
+                    updateDataStatus();
+                    updateVisualization();
+                } else {
+                    showToast(result.error || 'Error creando índice', 'error');
+                }
+            } catch (error) {
+                showToast('Error conectando con el servidor', 'error');
+                console.error(error);
+            }
+        }
+
+        // Ejecutar consulta
+        async function executeQuery() {
+            const query = document.getElementById('queryInput').value.trim();
+            
+            if (!query) {
+                showToast('Ingresa una consulta', 'warning');
+                return;
+            }
+
+            if (!indexCreated) {
+                showToast('Primero crea un índice', 'warning');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/execute_query`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ query })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    // Manejar diferentes tipos de respuestas
+                    if (result.results) {
+                        lastResults = result.results;
+                        updateResultsTable(lastResults);
+                        updateVisualization();
+                        document.getElementById('resultCount').textContent = `(${lastResults.length} resultados)`;
+                    }
+                    
+                    if (result.stats) {
+                        // Mostrar estadísticas
+                        showToast(JSON.stringify(result.stats, null, 2), 'success', 5000);
+                    }
+                    
+                    showToast(result.message || 'Consulta ejecutada', 'success');
+                    
+                    // Si fue un INSERT o POLYGON, actualizar datos locales
+                    if (query.toUpperCase().startsWith('INSERT') || query.toUpperCase().startsWith('POLYGON')) {
+                        await getAllData();
+                    }
+                } else {
+                    showToast(result.error || 'Error ejecutando consulta', 'error');
+                }
+            } catch (error) {
+                showToast('Error conectando con el servidor', 'error');
+                console.error(error);
+            }
+        }
+
+        // Obtener todos los datos del servidor
+        async function getAllData() {
+            try {
+                const response = await fetch(`${API_BASE}/get_all_data`);
+                const result = await response.json();
+                
+                if (result.success) {
+                    currentData = result.data || [];
+                    updateDataStatus();
+                    updateVisualization();
+                }
+            } catch (error) {
+                console.error('Error obteniendo datos:', error);
+            }
+        }
+
+        // Manejo de archivos CSV
+        function handleFileSelect() {
+            const file = document.getElementById('csvFile').files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const csv = e.target.result;
+                parseCSV(csv);
+            };
+            reader.readAsText(file);
+        }
+
+        function parseCSV(csv) {
+            const lines = csv.split('\n').filter(line => line.trim());
+            if (lines.length < 2) {
+                showToast('El archivo CSV debe tener al menos una fila de datos', 'error');
+                return;
+            }
+
+            const headers = lines[0].split(',').map(h => h.trim());
+            const data = [];
+
+            for (let i = 1; i < lines.length; i++) {
+                const values = lines[i].split(',').map(v => v.trim());
+                if (values.length === headers.length) {
+                    const row = {};
+                    headers.forEach((header, index) => {
+                        row[header] = values[index];
+                    });
+                    data.push(row);
+                }
+            }
+
+            csvData = { headers, data };
+            setupColumnSelector(headers);
+            showToast(`CSV cargado: ${data.length} filas`, 'success');
+        }
+
+        function setupColumnSelector(headers) {
+            const xColumn = document.getElementById('xColumn');
+            const yColumn = document.getElementById('yColumn');
+            const zColumn = document.getElementById('zColumn');
+
+            [xColumn, yColumn, zColumn].forEach(select => {
+                select.innerHTML = '';
+            });
+
+            zColumn.innerHTML = '<option value="">-- Ninguna --</option>';
+
+            headers.forEach(header => {
+                [xColumn, yColumn, zColumn].forEach(select => {
+                    const option = document.createElement('option');
+                    option.value = header;
+                    option.textContent = header;
+                    select.appendChild(option);
+                });
+            });
+
+            const probableX = headers.find(h => h.toLowerCase().includes('x')) || headers[0];
+            const probableY = headers.find(h => h.toLowerCase().includes('y')) || headers[1];
+            const probableZ = headers.find(h => h.toLowerCase().includes('z'));
+
+            xColumn.value = probableX;
+            yColumn.value = probableY;
+            if (probableZ) zColumn.value = probableZ;
+
+                        document.getElementById('columnSelector').style.display = 'block';
+            document.getElementById('loadDataBtn').style.display = 'block';
+        }
+
+        async function loadCSVData() {
+            if (!csvData) {
+                showToast('No hay datos CSV cargados', 'error');
+                return;
+            }
+
+            if (!indexCreated) {
+                showToast('Primero crea un índice', 'warning');
+                return;
+            }
+
+            const xCol = document.getElementById('xColumn').value;
+            const yCol = document.getElementById('yColumn').value;
+            const zCol = document.getElementById('zColumn').value;
+
+            if (!xCol || !yCol) {
+                showToast('Debes seleccionar al menos las columnas X e Y', 'error');
+                return;
+            }
+
+            let errorCount = 0;
+            let successCount = 0;
+            const totalRows = csvData.data.length;
+
+            showToast(`Procesando ${totalRows} filas...`, 'warning');
+
+            for (let i = 0; i < totalRows; i++) {
+                const row = csvData.data[i];
+                const x = parseFloat(row[xCol]);
+                const y = parseFloat(row[yCol]);
+                const z = zCol ? parseFloat(row[zCol]) : null;
+
+                if (isNaN(x) || isNaN(y) || (zCol && isNaN(z))) {
+                    errorCount++;
+                    continue;
+                }
+
+                // Construir comando INSERT
+                let insertCommand = `INSERT ${x} ${y}`;
+                if (z !== null && !isNaN(z)) {
+                    insertCommand += ` ${z}`;
+                }
+
+                try {
+                    const response = await fetch(`${API_BASE}/execute_query`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ query: insertCommand })
+                    });
+                    
+                    const result = await response.json();
+                    if (result.success) {
+                        successCount++;
+                    } else {
+                        errorCount++;
+                    }
+                } catch (error) {
+                    errorCount++;
+                }
+
+                // Actualizar progreso cada 10 puntos
+                if ((i + 1) % 10 === 0 || i === totalRows - 1) {
+                    const progress = ((i + 1) / totalRows * 100).toFixed(0);
+                    document.getElementById('dataStatus').innerHTML = 
+                        `<span class="status-indicator status-warning"></span>Cargando... ${progress}% (${successCount} insertados)`;
+                }
+            }
+
+            // Obtener todos los datos actualizados
+            await getAllData();
+
+            if (errorCount > 0) {
+                showToast(`Datos cargados: ${successCount} puntos exitosos, ${errorCount} errores`, 'warning');
+            } else {
+                showToast(`Datos cargados exitosamente: ${successCount} puntos`, 'success');
+            }
+        }
+        
+        async function sendAllCSVToBackend() {
+            if (!csvData) {
+                showToast('No hay datos CSV cargados', 'error');
+                return;
+            }
+
+            const xCol = document.getElementById('xColumn').value;
+            const yCol = document.getElementById('yColumn').value;
+
+            if (!xCol || !yCol) {
+                showToast('Debes seleccionar las columnas X e Y', 'error');
+                return;
+            }
+
+            const points = [];
+
+            for (let row of csvData.data) {
+                const x = parseFloat(row[xCol]);
+                const y = parseFloat(row[yCol]);
+
+                if (!isNaN(x) && !isNaN(y)) {
+                    points.push({ x, y });
+                }
+            }
+
+            console.log('Enviando puntos al backend:');
+            console.log(points);
+
+            try {
+                const response = await fetch(`${API_BASE}/bulk_insert`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ points })  // 👈 envías todo el vector
+                });
+
+                const result = await response.json();
+                if (result.success) {
+
+                    await getAllData();
+
+                    showToast(`Se insertaron ${points.length} puntos`, 'success');
+                } else {
+                    showToast('Error en el backend', 'error');
+                }
+            } catch (error) {
+                console.error(error);
+                showToast('Error al enviar los datos al backend', 'error');
+            }
+        }
+
+        async function clearData() {
+            if (!indexCreated) {
+                showToast('No hay índice activo', 'warning');
+                return;
+            }
+
+            if (confirm('¿Estás seguro de que quieres limpiar todos los datos? Se creará un nuevo índice vacío.')) {
+                // Crear nuevo índice (esto limpia los datos)
+                await createIndex();
+                
+                // Limpiar estado local
+                currentData = [];
+                lastResults = [];
+                csvData = null;
+                
+                document.getElementById('columnSelector').style.display = 'none';
+                document.getElementById('loadDataBtn').style.display = 'none';
+                document.getElementById('csvFile').value = '';
+                
+                clearResultsTable();
+                updateDataStatus();
+                updateVisualization();
+                
+                showToast('Datos limpiados', 'success');
+            }
+        }
+
+        // Autocompletado
+        function handleQueryInput(e) {
+            const input = e.target.value;
+            const suggestions = document.getElementById('suggestions');
+            
+            if (input.length === 0) {
+                suggestions.style.display = 'none';
+                return;
+            }
+
+            const matches = commands.filter(cmd => 
+                cmd.toLowerCase().startsWith(input.toLowerCase())
+            );
+
+            if (matches.length > 0) {
+                suggestions.innerHTML = matches.map(match => 
+                    `<div class="suggestion-item" onclick="selectSuggestion('${match}')">${match}</div>`
+                ).join('');
+                suggestions.style.display = 'block';
+            } else {
+                suggestions.style.display = 'none';
+            }
+        }
+
+        function handleQueryKeydown(e) {
+            const suggestions = document.getElementById('suggestions');
+            if (suggestions.style.display === 'none') return;
+
+            const items = suggestions.querySelectorAll('.suggestion-item');
+            let selected = suggestions.querySelector('.selected');
+
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                if (selected) {
+                    selected.classList.remove('selected');
+                    const next = selected.nextElementSibling || items[0];
+                    next.classList.add('selected');
+                } else {
+                    items[0]?.classList.add('selected');
+                }
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                if (selected) {
+                    selected.classList.remove('selected');
+                    const prev = selected.previousElementSibling || items[items.length - 1];
+                    prev.classList.add('selected');
+                } else {
+                    items[items.length - 1]?.classList.add('selected');
+                }
+            } else if (e.key === 'Enter') {
+                e.preventDefault();
+                if (selected) {
+                    selectSuggestion(selected.textContent);
+                } else {
+                    executeQuery();
+                }
+            } else if (e.key === 'Escape') {
+                suggestions.style.display = 'none';
+            }
+        }
+
+        function selectSuggestion(suggestion) {
+            document.getElementById('queryInput').value = suggestion;
+            document.getElementById('suggestions').style.display = 'none';
+            document.getElementById('queryInput').focus();
+        }
+
+        // Actualizar UI
+        function updateIndexStatus() {
+            const status = document.getElementById('indexStatus');
+            if (indexCreated) {
+                status.innerHTML = `<span class="status-indicator status-success"></span>Índice R-Tree activo`;
+            } else {
+                status.innerHTML = `<span class="status-indicator status-error"></span>Sin índice`;
+            }
+        }
+
+        function updateDataStatus() {
+            const status = document.getElementById('dataStatus');
+            const points2D = currentData.filter(p => p.type === '2D').length;
+            const points3D = currentData.filter(p => p.type === '3D').length;
+            const polygons = currentData.filter(p => p.type === 'Polygon').length;
+            
+            if (currentData.length > 0) {
+                let statusText = `<span class="status-indicator status-success"></span>`;
+                statusText += `Total: ${currentData.length} objetos<br>`;
+                if (points2D > 0) statusText += `2D: ${points2D} puntos `;
+                if (points3D > 0) statusText += `3D: ${points3D} puntos `;
+                if (polygons > 0) statusText += `Polígonos: ${polygons}`;
+                status.innerHTML = statusText;
+            } else {
+                status.innerHTML = `<span class="status-indicator status-warning"></span>Sin datos`;
+            }
+        }
+
+        function updateResultsTable(results) {
+            const tbody = document.querySelector('#resultsTable tbody');
+            tbody.innerHTML = '';
+
+            results.forEach(result => {
+                const row = tbody.insertRow();
+                row.insertCell(0).textContent = result.id || '-';
+                row.insertCell(1).textContent = result.x.toFixed(2);
+                row.insertCell(2).textContent = result.y.toFixed(2);
+                row.insertCell(3).textContent = result.z !== null && result.z !== undefined ? result.z.toFixed(2) : '-';
+                row.insertCell(4).textContent = result.type || 'Punto';
+                
+                if (result.distance !== undefined) {
+                    const distCell = row.insertCell(5);
+                    distCell.textContent = result.distance.toFixed(3);
+                    
+                    const headerRow = document.querySelector('#resultsTable thead tr');
+                    if (headerRow.cells.length === 5) {
+                        const th = document.createElement('th');
+                        th.textContent = 'Distancia';
+                        headerRow.appendChild(th);
+                    }
+                }
+            });
+        }
+
+        function clearResultsTable() {
+            const tbody = document.querySelector('#resultsTable tbody');
+            tbody.innerHTML = '';
+            
+            const headerRow = document.querySelector('#resultsTable thead tr');
+            while (headerRow.cells.length > 5) {
+                headerRow.removeChild(headerRow.lastChild);
+            }
+            
+            document.getElementById('resultCount').textContent = '';
+        }
+
+        // Visualizaciones
+        function initializeVisualizations() {
+            const layout2D = {
+                title: 'Visualización Espacial 2D',
+                xaxis: { title: 'X', gridcolor: '#e0e0e0' },
+                yaxis: { title: 'Y', gridcolor: '#e0e0e0' },
+                paper_bgcolor: 'rgba(0,0,0,0)',
+                plot_bgcolor: '#f8f9fa',
+                font: { family: 'Segoe UI', color: '#333' }
+            };
+            
+            Plotly.newPlot('plot2d', [], layout2D, { responsive: true });
+            init3DScene();
+        }
+
+        function switchTab(tab) {
+            currentTab = tab;
+            
+            document.querySelectorAll('.tab').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            document.getElementById('viz2d').style.display = tab === '2d' ? 'block' : 'none';
+            document.getElementById('viz3d').style.display = tab === '3d' ? 'block' : 'none';
+            
+            updateVisualization();
+        }
+
+        function updateVisualization() {
+            if (currentTab === '2d') {
+                update2DVisualization();
+            } else {
+                update3DVisualization();
+            }
+        }
+
+        function update2DVisualization() {
+            const traces = [];
+            
+            // Separar puntos regulares y resultados
+            const regularPoints = currentData.filter(p => 
+                p.type !== 'Polygon' && !lastResults.some(r => r.id === p.id)
+            );
+            const resultPoints = currentData.filter(p => 
+                p.type !== 'Polygon' && lastResults.some(r => r.id === p.id)
+            );
+            
+            // Puntos regulares
+            if (regularPoints.length > 0) {
+                traces.push({
+                    x: regularPoints.map(p => p.x),
+                    y: regularPoints.map(p => p.y),
+                    mode: 'markers',
+                    type: 'scatter',
+                    name: 'Puntos',
+                    marker: {
+                        size: 8,
+                        color: '#4dabf7',
+                        line: { width: 1, color: '#fff' }
+                    },
+                    text: regularPoints.map(p => `ID: ${p.id}<br>X: ${p.x.toFixed(2)}<br>Y: ${p.y.toFixed(2)}`),
+                    hovertemplate: '%{text}<extra></extra>'
+                });
+            }
+            
+            // Puntos resultado
+            if (resultPoints.length > 0) {
+                traces.push({
+                    x: resultPoints.map(p => p.x),
+                    y: resultPoints.map(p => p.y),
+                    mode: 'markers',
+                    type: 'scatter',
+                    name: 'Resultados',
+                    marker: {
+                        size: 12,
+                        color: '#ff6b6b',
+                        line: { width: 2, color: '#fff' }
+                    },
+                    text: resultPoints.map(p => `ID: ${p.id}<br>X: ${p.x.toFixed(2)}<br>Y: ${p.y.toFixed(2)}`),
+                    hovertemplate: '%{text}<extra></extra>'
+                });
+            }
+            
+            // Polígonos
+            const polygons = currentData.filter(p => p.type === 'Polygon');
+            polygons.forEach((polygon, idx) => {
+                if (polygon.vertices && polygon.vertices.length > 0) {
+                    const vertices = [...polygon.vertices, polygon.vertices[0]];
+                    const isResult = lastResults.some(r => r.id === polygon.id);
+                    
+                    traces.push({
+                        x: vertices.map(v => v.x),
+                        y: vertices.map(v => v.y),
+                        mode: 'lines+markers',
+                        type: 'scatter',
+                        name: `Polígono ${polygon.id}`,
+                        line: { 
+                            color: isResult ? '#ff6b6b' : '#868e96', 
+                            width: 2 
+                        },
+                        marker: { size: 6 },
+                        fill: 'toself',
+                        fillcolor: isResult ? 'rgba(255,107,107,0.2)' : 'rgba(134,142,150,0.2)'
+                    });
+                }
+            });
+            
+            const layout = {
+                title: `Visualización Espacial 2D (${currentData.length} objetos)`,
+                xaxis: { title: 'X', gridcolor: '#e0e0e0' },
+                yaxis: { title: 'Y', gridcolor: '#e0e0e0', scaleanchor: 'x' },
+                paper_bgcolor: 'rgba(0,0,0,0)',
+                plot_bgcolor: '#f8f9fa',
+                font: { family: 'Segoe UI', color: '#333' },
+                showlegend: true,
+                legend: { x: 1, y: 1, xanchor: 'right' }
+            };
+            
+            Plotly.newPlot('plot2d', traces, layout, { responsive: true });
+        }
+
+        function init3DScene() {
+            const container = document.getElementById('plot3d');
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+            
+            scene3D = new THREE.Scene();
+            scene3D.background = new THREE.Color(0xf8f9fa);
+            
+            camera3D = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
+            camera3D.position.set(50, 50, 50);
+            
+            renderer3D = new THREE.WebGLRenderer({ antialias: true });
+            renderer3D.setSize(width, height);
+            container.appendChild(renderer3D.domElement);
+            
+                        setupBasic3DControls();
+            
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            scene3D.add(ambientLight);
+            
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.4);
+            directionalLight.position.set(50, 50, 50);
+            scene3D.add(directionalLight);
+            
+            const gridHelper = new THREE.GridHelper(100, 20, 0x888888, 0xcccccc);
+            scene3D.add(gridHelper);
+            
+            const axesHelper = new THREE.AxesHelper(50);
+            scene3D.add(axesHelper);
+            
+            animate3D();
+        }
+
+        function setupBasic3DControls() {
+            let isMouseDown = false;
+            
+            const container = document.getElementById('plot3d');
+            
+            container.addEventListener('mousedown', () => isMouseDown = true);
+            container.addEventListener('mouseup', () => isMouseDown = false);
+            container.addEventListener('mouseleave', () => isMouseDown = false);
+            
+            container.addEventListener('mousemove', (e) => {
+                if (!isMouseDown) return;
+                
+                const deltaX = e.movementX;
+                const deltaY = e.movementY;
+                
+                const spherical = new THREE.Spherical();
+                spherical.setFromVector3(camera3D.position);
+                spherical.theta -= deltaX * 0.01;
+                spherical.phi += deltaY * 0.01;
+                spherical.phi = Math.max(0.1, Math.min(Math.PI - 0.1, spherical.phi));
+                camera3D.position.setFromSpherical(spherical);
+                camera3D.lookAt(0, 0, 0);
+            });
+            
+            container.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                const scale = e.deltaY > 0 ? 1.1 : 0.9;
+                camera3D.position.multiplyScalar(scale);
+            });
+        }
+
+        function animate3D() {
+            requestAnimationFrame(animate3D);
+            renderer3D.render(scene3D, camera3D);
+        }
+
+        function update3DVisualization() {
+            // Limpiar objetos existentes
+            const objectsToRemove = [];
+            scene3D.traverse((child) => {
+                if (child.userData.isDataPoint) {
+                    objectsToRemove.push(child);
+                }
+            });
+            objectsToRemove.forEach(obj => scene3D.remove(obj));
+            
+            // Separar datos por tipo
+            const points3D = currentData.filter(p => p.z !== null && p.z !== undefined && p.type !== 'Polygon');
+            const points2D = currentData.filter(p => (p.z === null || p.z === undefined) && p.type !== 'Polygon');
+            const polygons = currentData.filter(p => p.type === 'Polygon');
+            
+            // Geometría para puntos 3D
+            const geometry3D = new THREE.SphereGeometry(1, 16, 16);
+            
+            points3D.forEach(point => {
+                const isResult = lastResults.some(r => r.id === point.id);
+                const material = new THREE.MeshPhongMaterial({
+                    color: isResult ? 0xff6b6b : 0x4dabf7
+                });
+                const mesh = new THREE.Mesh(geometry3D, material);
+                mesh.position.set(point.x, point.z || 0, point.y);
+                mesh.userData.isDataPoint = true;
+                mesh.userData.point = point;
+                scene3D.add(mesh);
+            });
+            
+            // Geometría para puntos 2D
+            const geometry2D = new THREE.CylinderGeometry(0.5, 0.5, 0.1, 16);
+            
+            points2D.forEach(point => {
+                const isResult = lastResults.some(r => r.id === point.id);
+                const material = new THREE.MeshPhongMaterial({
+                    color: isResult ? 0xff6b6b : 0x868e96
+                });
+                const mesh = new THREE.Mesh(geometry2D, material);
+                mesh.position.set(point.x, 0, point.y);
+                mesh.userData.isDataPoint = true;
+                mesh.userData.point = point;
+                scene3D.add(mesh);
+            });
+            
+            // Polígonos
+            polygons.forEach(polygon => {
+                if (polygon.vertices && polygon.vertices.length > 0) {
+                    const shape = new THREE.Shape();
+                    polygon.vertices.forEach((v, i) => {
+                        if (i === 0) shape.moveTo(v.x, v.y);
+                        else shape.lineTo(v.x, v.y);
+                    });
+                    shape.closePath();
+                    
+                    const geometry = new THREE.ExtrudeGeometry(shape, {
+                        depth: 0.5,
+                        bevelEnabled: false
+                    });
+                    
+                    const isResult = lastResults.some(r => r.id === polygon.id);
+                    const material = new THREE.MeshPhongMaterial({
+                        color: isResult ? 0xff6b6b : 0x868e96,
+                        opacity: 0.7,
+                        transparent: true
+                    });
+                    
+                    const mesh = new THREE.Mesh(geometry, material);
+                    mesh.rotation.x = -Math.PI / 2;
+                    mesh.userData.isDataPoint = true;
+                    mesh.userData.point = polygon;
+                    scene3D.add(mesh);
+                }
+            });
+        }
+
+        // Descargar resultados
+        function downloadResults() {
+            if (lastResults.length === 0) {
+                showToast('No hay resultados para descargar', 'warning');
+                return;
+            }
+            
+            let csv = 'ID,X,Y,Z,Tipo\n';
+            lastResults.forEach(result => {
+                const z = result.z !== null && result.z !== undefined ? result.z : '';
+                csv += `${result.id || ''},${result.x},${result.y},${z},${result.type || 'Punto'}\n`;
+            });
+            
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `resultados_spatial_${new Date().getTime()}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+            
+            showToast('Resultados descargados', 'success');
+        }
+
+        // Sistema de notificaciones
+        function showToast(message, type = 'success', duration = 3000) {
+            const existingToast = document.querySelector('.toast');
+            if (existingToast) {
+                existingToast.remove();
+            }
+            
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span style="font-size: 20px;">
+                        ${type === 'success' ? '✓' : type === 'error' ? '✗' : '!'}
+                    </span>
+                    <span>${message}</span>
+                </div>
+            `;
+            
+            document.body.appendChild(toast);
+            
+            setTimeout(() => toast.classList.add('show'), 10);
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }, duration);
+        }
+
+        // Redimensionar visualizaciones
+        window.addEventListener('resize', function() {
+            Plotly.Plots.resize('plot2d');
+            
+            if (renderer3D) {
+                const container = document.getElementById('plot3d');
+                const width = container.clientWidth;
+                const height = container.clientHeight;
+                
+                camera3D.aspect = width / height;
+                camera3D.updateProjectionMatrix();
+                renderer3D.setSize(width, height);
+            }
+        });
+
+        // Atajos de teclado
+        document.addEventListener('keydown', function(e) {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                executeQuery();
+            }
+            
+            if ((e.ctrlKey || e.metaKey) && e.key === 'l') {
+                e.preventDefault();
+                clearData();
+            }
+            
+            if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                e.preventDefault();
+                downloadResults();
+            }
+        });
+
+        // Verificar conexión periódicamente
+        setInterval(checkServerConnection, 5001);
+    </script>
+</body>
+</html> 
